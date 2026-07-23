@@ -9,5 +9,16 @@ export class UsersService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+        @InjectRepository(RiderVerification)
+        private readonly riderVerificationRepository: Repository<RiderVerification>
     ) { }
+
+    async findByIdentity(identity: string): Promise<User | null> {
+        return this.userRepository.findOne({
+            where: [
+                { email: identity },
+                { phone: identity },
+            ]
+        })
+    }
 }
