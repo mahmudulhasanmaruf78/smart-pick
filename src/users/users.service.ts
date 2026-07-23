@@ -21,4 +21,14 @@ export class UsersService {
             ]
         })
     }
+
+    async createCustomer(userData: Partial<User>): Promise<User> {
+        const newUser = this.userRepository.create({
+            ...userData,
+            role: 'customer',
+
+        });
+        return await this.userRepository.save(newUser);
+    }
+
 }
