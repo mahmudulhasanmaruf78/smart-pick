@@ -36,13 +36,22 @@ export class UsersService {
         nidNumber: string,
         nidImage: string,
     ): Promise<User> {
-        // Save Rider User
+
         const newRider = this.userRepository.create({
             ...userData,
             role: 'rider',
         });
         const savedRider = await this.userRepository.save(newRider);
 
+        const verification = this.verificationRepository.create({
+            nidNumber,
+            nidImage,
+            status: 'pending',
+            rider: savedRider,
+        });
+        await this.verificationRepository.save(verification);
 
-
+        return savedRider;
     }
+
+}
