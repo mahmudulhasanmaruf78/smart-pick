@@ -15,4 +15,11 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 
 @Controller('auth')
-export class AuthController { }
+export class AuthController {
+    constructor(private readonly authService: AuthService) { }
+
+    @Post('register-customer')
+    async registerCustomer(@Body() dto: RegisterCustomerDto) {
+        return await this.authService.registerCustomer(dto);
+    }
+}
