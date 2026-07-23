@@ -50,5 +50,17 @@ export class AuthController {
             },
         }),
     )
+    async registerRider(
+        @Body() dto: RegisterRiderDto,
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        return await this.authService.registerRider(dto, file);
+    }
+
+    // 3. Login endpoint
+    @Post('login')
+    async login(@Body() dto: LoginDto) {
+        return await this.authService.login(dto);
+    }
 
 }
