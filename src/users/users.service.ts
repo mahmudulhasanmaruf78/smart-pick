@@ -9,26 +9,40 @@ export class UsersService {
     constructor(
         @InjectRepository(User)
         private readonly userRepository: Repository<User>,
+
         @InjectRepository(RiderVerification)
-        private readonly riderVerificationRepository: Repository<RiderVerification>
+        private readonly verificationRepository: Repository<RiderVerification>,
     ) { }
 
+
     async findByIdentity(identity: string): Promise<User | null> {
-        return this.userRepository.findOne({
-            where: [
-                { email: identity },
-                { phone: identity },
-            ]
-        })
+        return await this.userRepository.findOne({
+            where: [{ email: identity }, { phone: identity }],
+        });
     }
+
 
     async createCustomer(userData: Partial<User>): Promise<User> {
         const newUser = this.userRepository.create({
             ...userData,
             role: 'customer',
-
         });
         return await this.userRepository.save(newUser);
     }
 
-}
+
+    async createRider(
+        userData: Partial<User>,
+        nidNumber: string,
+        nidImage: string,
+    ): Promise<User> {
+        // Save Rider User
+        const newRider = this.userRepository.create({
+            ...userData,
+            role: 'rider',
+        });
+        const savedRider = await this.userRepository.save(newRider);
+
+
+
+    }
