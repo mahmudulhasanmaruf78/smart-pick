@@ -15,9 +15,7 @@ export class UsersService {
 
     async findByIdentity(identity: string): Promise<User | null> {
         return this.userRepository.findOne({
-            where: [
-                { email: identity },
-                { phone: identity },
+            
             ]
         })
     }
