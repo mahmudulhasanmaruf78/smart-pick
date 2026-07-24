@@ -13,6 +13,6 @@ export class UpdateUserDto {
 
     @IsOptional()
     @IsString()
+    @MinLength(11)
     phone: string;
-
 }
