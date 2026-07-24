@@ -11,33 +11,33 @@ export class ZonesService implements OnModuleInit {
   ) {}
   async onModuleInit() {
     const InsideDhakaExist = await this.zoneRepo.findOne({
-      where: { name: 'inside Dhaka' },
+      where: { name: 'Inside Dhaka' },
     });
     if (!InsideDhakaExist) {
       const zone = this.zoneRepo.create({
-        name: 'inside Dhaka',
+        name: 'Inside Dhaka',
         baseRegularFare: 60,
         baseExpressFare: 100,
         weightLimitKg: 2,
         extraWeightRate: 20,
       });
       await this.zoneRepo.save(zone);
-      console.log('Zone: inside Dhaka');
+      console.log('Zone: Inside Dhaka');
     }
 
     const OutsideDhakaExist = await this.zoneRepo.findOne({
-      where: { name: 'outside Dhaka' },
+      where: { name: 'Outside Dhaka' },
     });
     if (!OutsideDhakaExist) {
       const zone = this.zoneRepo.create({
-        name: 'outside Dhaka',
+        name: 'Outside Dhaka',
         baseRegularFare: 120,
         baseExpressFare: 180,
         weightLimitKg: 2,
         extraWeightRate: 30,
       });
       await this.zoneRepo.save(zone);
-      console.log('Zone: outside Dhaka');
+      console.log('Zone: Outside Dhaka');
     }
   }
 }
