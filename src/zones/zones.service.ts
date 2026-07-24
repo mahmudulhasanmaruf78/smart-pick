@@ -40,4 +40,8 @@ export class ZonesService implements OnModuleInit {
       console.log('Zone: Outside Dhaka');
     }
   }
+
+  async findAll() {
+    return this.zoneRepo.find();
+  }
 }
