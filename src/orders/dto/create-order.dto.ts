@@ -1,55 +1,57 @@
+import { Type } from 'class-transformer';
 import {
   IsEnum,
+  IsNotEmpty,
   IsNumber,
-  IsOptional,
+  IsPositive,
   IsString,
-  Length,
+  MaxLength,
+  MinLength,
   Min,
 } from 'class-validator';
 import { DeliveryType, ParcelType } from '../entities/order.entity';
 
 export class CreateOrderDto {
+  //Pickup
   @IsString()
-  @Length(1, 100)
+  @IsNotEmpty()
+  @MinLength(3)
+  @MaxLength(100)
   pickupZone: string;
 
   @IsString()
-  @Length(1, 300)
+  @IsNotEmpty()
+  @MaxLength(300)
   pickupArea: string;
 
+  //Drop
   @IsString()
-  @Length(1, 100)
+  @IsNotEmpty()
+  @MaxLength(100)
   dropZone: string;
 
   @IsString()
-  @Length(1, 300)
+  @IsNotEmpty()
+  @MinLength(5)
+  @MaxLength(300)
   dropArea: string;
 
-  @IsString()
-  @Length(1, 100)
-  customerName: string;
-
-  @IsString()
-  @Length(1, 20)
-  customerPhone: string;
-
-  @IsOptional()
-  @IsString()
-  @Length(1, 300)
-  customerAddress?: string;
-
-  @IsEnum(ParcelType)
+  //Parcel Info
+  @IsEnum(ParcelType, {
+    message: 'parcelType must be: document, parcel, or fragile',
+  })
+  @IsNotEmpty()
   parcelType: ParcelType;
 
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @IsNumber()
+  @IsPositive()
+  @Min(0.1, { message: 'weight must be at least 0.1 kg' })
+  @Type(() => Number)
   weight: number;
 
-  @IsEnum(DeliveryType)
+  @IsEnum(DeliveryType, {
+    message: 'deliveryType must be: regular or express',
+  })
+  @IsNotEmpty()
   deliveryType: DeliveryType;
-
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  fare?: number;
 }

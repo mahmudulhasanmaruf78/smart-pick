@@ -2,9 +2,12 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { User } from '../../users/entities/user.entity';
 
 export enum OrderStatus {
   PENDING = 'pending',       // Customer create order
@@ -47,15 +50,6 @@ export class Order {
   @Column({ type: 'varchar', length: 300 })
   dropArea: string;
 
-  @Column({ type: 'varchar', length: 100 })
-  customerName: string;
-
-  @Column({ type: 'varchar', length: 20 })
-  customerPhone: string;
-
-  @Column({ type: 'varchar', length: 300, nullable: true })
-  customerAddress: string | null;
-
   //Parcel Details
   @Column({ type: 'enum', enum: ParcelType, default: ParcelType.PARCEL })
   parcelType: ParcelType;
@@ -82,4 +76,21 @@ export class Order {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+
+//customer info (who created the order)
+  @ManyToOne(() => User, (user) => user.customerOrders, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn()
+  customer: User;
+
+  // rider info
+  @ManyToOne(() => User, (user) => user.riderOrders, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn()
+  rider: User | null;
 }
