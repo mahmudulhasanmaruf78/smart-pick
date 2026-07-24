@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { Validator } from 'class-validator';
 import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
@@ -14,4 +13,4 @@ async function bootstrap() {
   );
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+void bootstrap();
