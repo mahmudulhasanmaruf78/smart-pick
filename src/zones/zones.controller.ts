@@ -1,5 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ZonesService } from './zones.service';
+import { CreateZoneDto } from './dto/create-zone.dto';
 
 @Controller('zones')
 export class ZonesController {
@@ -8,5 +9,10 @@ export class ZonesController {
   @Get()
   findAll() {
     return this.zoneService.findAll();
+  }
+
+  @Post()
+  create(@Body() dto: CreateZoneDto) {
+    return this.zoneService.create(dto);
   }
 }

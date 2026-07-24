@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DeliveryZone } from './entities/delivery-zone.entity';
+import { CreateZoneDto } from './dto/create-zone.dto';
 
 @Injectable()
 export class ZonesService implements OnModuleInit {
@@ -36,6 +37,7 @@ export class ZonesService implements OnModuleInit {
         weightLimitKg: 2,
         extraWeightRate: 30,
       });
+
       await this.zoneRepo.save(zone);
       console.log('Zone: Outside Dhaka');
     }
@@ -43,5 +45,10 @@ export class ZonesService implements OnModuleInit {
 
   async findAll() {
     return this.zoneRepo.find();
+  }
+
+  async create(dto: CreateZoneDto) {
+    const zone = this.zoneRepo.create(dto);
+    return this.zoneRepo.save(zone);
   }
 }
