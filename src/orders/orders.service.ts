@@ -53,3 +53,28 @@ export class OrdersService {
     // Round fare to 2 decimal places
     return Math.round(fare * 100) / 100;
   }
+
+  //CREATE ORDER
+  async createOrder(
+    createOrderDto: CreateOrderDto,
+    customer: User,
+  ): Promise<Order> {
+    // Fare auto-calculate 
+    const fare = await this.calculateFare(
+      createOrderDto.dropZone,
+      createOrderDto.weight,
+      createOrderDto.deliveryType,
+    );
+
+    // New order create
+    const order = this.orderRepo.create({
+      ...createOrderDto,
+      fare: fare,
+      status: OrderStatus.PENDING,
+      customer: customer,
+      rider: null,
+      acceptedAt: null,
+    });
+
+    return await this.orderRepo.save(order);
+  }
