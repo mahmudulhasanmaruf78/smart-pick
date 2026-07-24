@@ -78,3 +78,50 @@ export class OrdersService {
 
     return await this.orderRepo.save(order);
   }
+
+  //Edit Order 
+  async editOrder(
+    id: number,
+    updateOrderDto: UpdateOrderDto,
+    customer: User,
+  ): Promise<Order> {
+    //Find Order 
+    const order = await this.orderRepo.findOne({
+      where: { id: id },
+      relations: { customer: true },
+    });
+
+    if (order == null) {
+      throw new NotFoundException(`Order with id ${id} not found`);
+    }
+
+    // Only the customer who created the order can edit it
+    if (order.customer.id !== customer.id) {
+      throw new ForbiddenException(
+        'You are not allowed to edit this order',
+      );
+    }
+
+    // Only pending orders can be edited
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException(
+        `Cannot edit order. Order status is '${order.status}'. Only 'pending' orders can be edited.`,
+      );
+    }
+
+    // Calculate new fare based on updated details
+    const newDropZone = updateOrderDto.dropZone ?? order.dropZone;
+    const newWeight = updateOrderDto.weight ?? order.weight;
+    const newDeliveryType = updateOrderDto.deliveryType ?? order.deliveryType;
+
+    const newFare = await this.calculateFare(
+      newDropZone,
+      newWeight,
+      newDeliveryType,
+    );
+
+    // Order update
+    Object.assign(order, updateOrderDto, { fare: newFare });
+
+    return await this.orderRepo.save(order);
+  }
