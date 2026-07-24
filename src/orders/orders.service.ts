@@ -125,3 +125,71 @@ export class OrdersService {
 
     return await this.orderRepo.save(order);
   }
+
+  // Cancel Order
+  async cancelOrder(id: number, customer: User): Promise<string> {
+    const order = await this.orderRepo.findOne({
+      where: { id: id },
+      relations: { customer: true },
+    });
+
+    if (order == null) {
+      throw new NotFoundException(`Order with id ${id} not found`);
+    }
+
+    // Only the customer who created the order can cancel it
+    if (order.customer.id !== customer.id) {
+      throw new ForbiddenException(
+        'You are not allowed to cancel this order',
+      );
+    }
+
+    // Pending order 
+    if (order.status === OrderStatus.PENDING) {
+      order.status = OrderStatus.CANCELLED;
+      await this.orderRepo.save(order);
+      return `Order id ${id} has been cancelled successfully`;
+    }
+
+    // Accepted order 
+    if (order.status === OrderStatus.ACCEPTED) {
+      if (order.acceptedAt == null) {
+        throw new BadRequestException('Invalid order state: acceptedAt is missing.');
+      }
+      const now = new Date();
+      const acceptedAt = new Date(order.acceptedAt);
+      const diffInMilliseconds = now.getTime() - acceptedAt.getTime();
+      const diffInHours = diffInMilliseconds / (1000 * 60 * 60);
+
+      if (diffInHours <= 1) {
+        order.status = OrderStatus.CANCELLED;
+        await this.orderRepo.save(order);
+        return `Order id ${id} has been cancelled successfully`;
+      } else {
+        throw new BadRequestException(
+          'Cannot cancel order. More than 1 hour has passed since the rider accepted.',
+        );
+      }
+    }
+
+    // Other statuses (DELIVERED, CANCELLED) cannot be cancelled
+    throw new BadRequestException(
+      `Cannot cancel order with status '${order.status}'.`,
+    );
+  }
+
+  //Get Order History for a specific customer
+  async getCustomerHistory(customer: User): Promise<Order[]> {
+    return await this.orderRepo.find({
+      where: {
+        customer: { id: customer.id },
+      },
+      relations: {
+        rider: true,
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+  }
+}
