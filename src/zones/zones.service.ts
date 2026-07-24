@@ -9,7 +9,20 @@ export class ZonesService implements OnModuleInit {
     @InjectRepository(DeliveryZone)
     private readonly zoneRepo: Repository<DeliveryZone>,
   ) {}
-  onModuleInit() {
-    console.log('ZonesService initialized, repo:', !!this.zoneRepo);
+  async onModuleInit() {
+    const exist = await this.zoneRepo.findOne({
+      where: { name: 'Inside Dhaka' },
+    });
+    if (!exist) {
+      const zone = this.zoneRepo.create({
+        name: 'Inside Dhaka',
+        baseRegularFare: 60,
+        baseExpressFare: 100,
+        weightLimitKg: 2,
+        extraWeightRate: 20,
+      });
+      await this.zoneRepo.save(zone);
+      console.log('Zone: Inside Dhaka');
+    }
   }
 }
