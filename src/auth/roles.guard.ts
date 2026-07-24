@@ -10,3 +10,16 @@ export class RolesGuard implements CanActivate {
             context.getHandler(),
             context.getClass(),
         ]);
+        if (!requiredRoles) {
+            return true; // Public route, allow access
+        }
+        const request = context.switchToHttp().getRequest();
+        const user = request.user; // Attached by JwtStrategy
+        if (!user || !requiredRoles.includes(user.role)) {
+            throw new ForbiddenException(
+                'You do not have permission to access this resource',
+            );
+        }
+        return true;
+    }
+}
