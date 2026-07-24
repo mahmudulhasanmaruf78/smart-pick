@@ -1,4 +1,12 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Get } from '@nestjs/common';
+import { ZonesService } from './zones.service';
 
 @Controller('zones')
-export class ZonesController {}
+export class ZonesController {
+  constructor(private readonly zoneService: ZonesService) {}
+
+  @Get()
+  findAll() {
+    return this.zoneService.findAll();
+  }
+}
