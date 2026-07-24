@@ -25,6 +25,19 @@ export class CreateOrderDto {
   @Length(1, 300)
   dropArea: string;
 
+  @IsString()
+  @Length(1, 100)
+  customerName: string;
+
+  @IsString()
+  @Length(1, 20)
+  customerPhone: string;
+
+  @IsOptional()
+  @IsString()
+  @Length(1, 300)
+  customerAddress?: string;
+
   @IsEnum(ParcelType)
   parcelType: ParcelType;
 
