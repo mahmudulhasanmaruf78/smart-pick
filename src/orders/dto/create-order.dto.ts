@@ -17,43 +17,43 @@ export class CreateOrderDto {
   @IsNotEmpty()
   @MinLength(3)
   @MaxLength(100)
-  pickupZone!: string;
+  pickupZone: string;
 
   @IsString()
   @IsNotEmpty()
   @MinLength(5)
   @MaxLength(300)
-  pickupArea!: string;
+  pickupArea: string;
 
   //Drop
   @IsString()
   @IsNotEmpty()
   @MinLength(3)
   @MaxLength(100)
-  dropZone!: string;
+  dropZone: string;
 
   @IsString()
   @IsNotEmpty()
   @MinLength(5)
   @MaxLength(300)
-  dropArea!: string;
+  dropArea: string;
 
   //Parcel Info
   @IsEnum(ParcelType, {
     message: 'parcelType must be: document, parcel, or fragile',
   })
   @IsNotEmpty()
-  parcelType!: ParcelType;
+  parcelType: ParcelType;
 
   @IsNumber()
   @IsPositive()
   @Min(0.1, { message: 'weight must be at least 0.1 kg' })
   @Type(() => Number)
-  weight!: number;
+  weight: number;
 
   @IsEnum(DeliveryType, {
     message: 'deliveryType must be: regular or express',
   })
   @IsNotEmpty()
-  deliveryType!: DeliveryType;
+  deliveryType: DeliveryType;
 }
