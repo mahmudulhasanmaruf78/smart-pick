@@ -9,11 +9,15 @@ import { RolesGuard } from './roles.guard';
 
 @Module({
   imports: [
-    UsersModule, // Imports UsersService so AuthService can use it
+    UsersModule,
+    ConfigModule, // Imported so ConfigService is available to JwtStrategy
     JwtModule.registerAsync({
-      global: true,
-      secret: 'hasnain', // Secret key for token encryption
-      signOptions: { expiresIn: '1d' }, // Token valid for 24 hours
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        secret: configService.get<string>('JWT_SECRET', 'hasnain'),
+        signOptions: { expiresIn: '1d' },
+      }),
     }),
   ],
   controllers: [AuthController],
