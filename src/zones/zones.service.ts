@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DeliveryZone } from './entities/delivery-zone.entity';
@@ -48,7 +48,16 @@ export class ZonesService implements OnModuleInit {
   }
 
   async create(dto: CreateZoneDto) {
-    const zone = this.zoneRepo.create(dto);
-    return this.zoneRepo.save(zone);
+    try {
+      const zone = this.zoneRepo.create(dto);
+      return await this.zoneRepo.save(zone);
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && error.code === '23505') {
+        throw new ConflictException(
+          `A zone named "${dto.name}" already exists.`,
+        );
+      }
+      throw error;
+    }
   }
 }
