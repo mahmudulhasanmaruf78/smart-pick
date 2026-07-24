@@ -1,8 +1,14 @@
-import { Injectable, OnModuleInit, ConflictException } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DeliveryZone } from './entities/delivery-zone.entity';
 import { CreateZoneDto } from './dto/create-zone.dto';
+import { UpdateZoneDto } from './dto/update-zone.dto';
 
 @Injectable()
 export class ZonesService implements OnModuleInit {
@@ -59,5 +65,14 @@ export class ZonesService implements OnModuleInit {
       }
       throw error;
     }
+  }
+
+  async update(id: number, dto: UpdateZoneDto) {
+    const zone = await this.zoneRepo.findOne({ where: { id } });
+    if (!zone) {
+      throw new NotFoundException(`Zone with ${id} not found.`);
+    }
+    Object.assign(zone, dto);
+    return this.zoneRepo.save(zone);
   }
 }
