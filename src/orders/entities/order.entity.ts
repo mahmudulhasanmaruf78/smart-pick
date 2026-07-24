@@ -2,12 +2,9 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  JoinColumn,
-  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { User } from '../../users/entities/user.entity';
 
 export enum OrderStatus {
   PENDING = 'pending',       // Customer create order
@@ -76,21 +73,4 @@ export class Order {
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-
-//customer info (who created the order)
-  @ManyToOne(() => User, (user) => user.customerOrders, {
-    nullable: false,
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn()
-  customer: User;
-
-  // rider info
-  @ManyToOne(() => User, (user) => user.riderOrders, {
-    nullable: true,
-    onDelete: 'SET NULL',
-  })
-  @JoinColumn()
-  rider: User | null;
 }
