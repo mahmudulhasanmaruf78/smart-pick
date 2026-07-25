@@ -7,6 +7,7 @@ import { VerificationStatus } from '../common/enums/verification-status.enum';
 
 export interface JwtPayload {
   sub: number;
+  email?: string;
   role: Role;
   riderVerification?: { status: VerificationStatus };
 }
@@ -28,6 +29,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
     return {
       id: payload.sub,
+      email: payload.email,
       role: payload.role,
       riderVerification: payload.riderVerification,
     };

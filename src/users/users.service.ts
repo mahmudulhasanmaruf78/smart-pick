@@ -7,8 +7,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { RiderVerification } from './entities/rider-verification.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from '../common/enums/role.enum';
+import { VerificationStatus } from '../common/enums/verification-status.enum';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
@@ -16,6 +18,9 @@ export class UsersService implements OnModuleInit {
   constructor(
     @InjectRepository(User)
     private readonly usersRepo: Repository<User>,
+
+    @InjectRepository(RiderVerification)
+    private readonly verificationRepository: Repository<RiderVerification>,
   ) {}
 
   async onModuleInit() {
@@ -36,6 +41,43 @@ export class UsersService implements OnModuleInit {
       await this.usersRepo.save(adminUser);
       console.log('Admin user created successfully');
     }
+  }
+
+  async findByIdentity(identity: string): Promise<User | null> {
+    return await this.usersRepo.findOne({
+      where: [{ email: identity }, { phone: identity }],
+    });
+  }
+
+  async createCustomer(userData: Partial<User>): Promise<User> {
+    const newUser = this.usersRepo.create({
+      ...userData,
+      role: Role.Customer,
+    });
+    return await this.usersRepo.save(newUser);
+  }
+
+  async createRider(
+    userData: Partial<User>,
+    nidNumber: string,
+    nidImage: string,
+  ): Promise<User> {
+    const newRider = this.usersRepo.create({
+      ...userData,
+      role: Role.Rider,
+    });
+    const savedRider = await this.usersRepo.save(newRider);
+
+    const verification = this.verificationRepository.create({
+      userId: savedRider.id,
+      nidNumber,
+      nidImagePath: nidImage,
+      status: VerificationStatus.Pending,
+      user: savedRider,
+    });
+    await this.verificationRepository.save(verification);
+
+    return savedRider;
   }
 
   async findProfile(userId: number) {
