@@ -14,16 +14,16 @@ export class AdminController {
 
   @Get('dashboard')
   getDashboardStats() {
-    this.adminService.getDashboardStats();
+    return this.adminService.getDashboardStats();
   }
 
   @Patch('verify-rider/:id')
   verifyRider(@Param('id') id: string, @Body() dto: VerifyRiderDto) {
-    this.adminService.verifyRider(parseInt(id, 10), dto);
+    return this.adminService.verifyRider(parseInt(id, 10), dto);
   }
 
   @Patch('users/suspend/:id')
   suspendUser(@Param('id') id: string) {
-    this.adminService.suspendUser(parseInt(id, 10));
+    return this.adminService.suspendUser(parseInt(id, 10));
   }
 }
