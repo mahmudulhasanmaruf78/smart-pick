@@ -38,7 +38,7 @@ export class AdminService {
       throw new NotFoundException('User not found');
     }
 
-    user.isActive = true;
+    user.isActive = false;
     return await this.userRepo.save(user);
   }
 
