@@ -53,13 +53,13 @@ export class Order {
   @Column({ type: 'varchar', length: 300 })
   dropArea: string;
 
-  @Column({ type: 'enum', enum: ParcelType, default: ParcelType.PARCEL })
+  @Column({ type: 'enum', enum: ParcelType, default: ParcelType.Parcel })
   parcelType: ParcelType | string;
 
   @Column({ type: 'float' })
   weight: number;
 
-  @Column({ type: 'enum', enum: DeliveryType, default: DeliveryType.REGULAR })
+  @Column({ type: 'enum', enum: DeliveryType, default: DeliveryType.Regular })
   deliveryType: DeliveryType;
 
   @Column({ type: 'decimal', precision: 10, scale: 2, default: 0 })
