@@ -39,7 +39,6 @@ export class User {
     cascade: true,
     nullable: true,
   })
-  @JoinColumn()
   riderVerification?: RiderVerification;
 
   @OneToMany(() => Order, (order) => order.customer)

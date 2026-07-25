@@ -46,6 +46,7 @@ export class UsersService implements OnModuleInit {
   async findByIdentity(identity: string): Promise<User | null> {
     return await this.usersRepo.findOne({
       where: [{ email: identity }, { phone: identity }],
+      relations: { riderVerification: true },
     });
   }
 

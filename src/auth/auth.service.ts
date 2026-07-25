@@ -97,8 +97,13 @@ export class AuthService {
             throw new UnauthorizedException('Invalid credentials');
         }
 
-        // Token payload contains: Subject (user id), Email, and User Role
-        const payload = { sub: user.id, email: user.email, role: user.role };
+        // Token payload contains: Subject (user id), Email, User Role, and Rider Verification status
+        const payload = {
+            sub: user.id,
+            email: user.email,
+            role: user.role,
+            riderVerification: user.riderVerification ? { status: user.riderVerification.status } : undefined,
+        };
         const accessToken = this.jwtService.sign(payload);
 
         return {
