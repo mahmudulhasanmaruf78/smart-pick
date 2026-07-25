@@ -1,6 +1,11 @@
-import { Injectable, OnModuleInit, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from 'src/common/enums/role.enum';
@@ -50,6 +55,16 @@ export class UsersService implements OnModuleInit {
 
     if (updateUserDto.phone) {
       user.phone = updateUserDto.phone;
+    }
+
+    if (updateUserDto.email) {
+      const existingUser = await this.usersRepo.findOne({
+        where: { email: updateUserDto.email, id: Not(userId) },
+      });
+      if (existingUser) {
+        throw new ConflictException('Email already exists');
+      }
+      user.email = updateUserDto.email;
     }
 
     if (updateUserDto.password) {
