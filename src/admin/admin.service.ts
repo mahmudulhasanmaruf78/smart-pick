@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Order } from 'src/orders/entities/order.entity';
-import { RiderVerification } from 'src/users/entities/rider-verification.entity';
-import { User } from 'src/users/entities/user.entity';
+import { Order } from '../orders/entities/order.entity';
+import { RiderVerification } from '../users/entities/rider-verification.entity';
+import { User } from '../users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { VerifyRiderDto } from './dto/verify-rider.dto';
-import { Role } from 'src/common/enums/role.enum';
-import { OrderStatus } from 'src/orders/enums/order.enum';
+import { Role } from '../common/enums/role.enum';
+import { OrderStatus } from '../orders/enums/order.enum';
 
 @Injectable()
 export class AdminService {

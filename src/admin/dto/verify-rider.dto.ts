@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty } from 'class-validator';
-import { VerificationStatus } from 'src/common/enums/verification-status.enum';
+import { VerificationStatus } from '../../common/enums/verification-status.enum';
 
 export class VerifyRiderDto {
   @IsNotEmpty()
