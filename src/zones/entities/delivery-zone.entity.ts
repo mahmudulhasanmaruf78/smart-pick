@@ -14,16 +14,16 @@ export class DeliveryZone {
   @Column({ unique: true })
   name: string;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 60 })
   baseRegularFare: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 120 })
   baseExpressFare: number;
 
-  @Column({ type: 'float' })
+  @Column({ type: 'float', default: 2 })
   weightLimitKg: number;
 
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
+  @Column({ type: 'decimal', precision: 10, scale: 2, default: 20 })
   extraWeightRate: number;
 
   @CreateDateColumn()

@@ -5,10 +5,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { RiderVerification } from './rider-verification.entity';
 import { Role } from '../../common/enums/role.enum';
+import { Order } from '../../orders/entities/order.entity';
 
 @Entity('users')
 export class User {
@@ -39,6 +41,12 @@ export class User {
   })
   @JoinColumn()
   riderVerification?: RiderVerification;
+
+  @OneToMany(() => Order, (order) => order.customer)
+  customerOrders?: Order[];
+
+  @OneToMany(() => Order, (order) => order.rider)
+  riderOrders?: Order[];
 
   @CreateDateColumn()
   createdAt: Date;
