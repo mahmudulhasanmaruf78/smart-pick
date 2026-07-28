@@ -1,9 +1,3 @@
-import {
-  Injectable,
-  OnModuleInit,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Not, Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -12,6 +6,12 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Role } from '../common/enums/role.enum';
 import { VerificationStatus } from '../common/enums/verification-status.enum';
 import * as bcrypt from 'bcrypt';
+import {
+  Injectable,
+  OnModuleInit,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 
 @Injectable()
 export class UsersService implements OnModuleInit {
