@@ -1,98 +1,141 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🚀 Smart Pick & Drop Delivery Management System (Backend API)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+![NestJS](https://img.shields.io/badge/NestJS-v11.0-red?style=for-the-badge&logo=nestjs)
+![TypeScript](https://img.shields.io/badge/TypeScript-v5.7-blue?style=for-the-badge&logo=typescript)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-v16-navy?style=for-the-badge&logo=postgresql)
+![TypeORM](https://img.shields.io/badge/TypeORM-v11.0-orange?style=for-the-badge&logo=typeorm)
+![JWT](https://img.shields.io/badge/JWT-Authentication-black?style=for-the-badge&logo=json-web-tokens)
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+A robust, enterprise-grade **RESTful API Backend** for a modern logistics and consignment delivery platform built with **NestJS**, **TypeScript**, **PostgreSQL**, and **TypeORM**.
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## 📌 Features & Key Modules
 
-## Project setup
+### 👤 1. Authentication & Identity Management (`/auth`)
+* **Role-Based Access Control (RBAC)**: Support for `Customer`, `Rider`, and `Admin` roles.
+* **Password Hashing**: Secure password encryption using `bcrypt` (Cost Factor: 10).
+* **JWT Authentication**: Passport-JWT stateless token-based authorization.
+* **Rider NID Upload**: Multipart form-data image upload using `Multer`.
 
-```bash
-$ npm install
+### 📦 2. Customer Consignment Booking (`/orders`)
+* **Dynamic Fare Calculation**: Automatic fare computation based on pickup/drop delivery zone, parcel weight, and delivery speed (`regular` vs `express`).
+* **Order Lifecycle**: Booking, updating pending details, cancellation within allowable timeframes, and full order history tracking.
+
+### 🏍️ 3. Rider Logistics Operations (`/orders`)
+* **Jobs Board**: View available pending orders filtered by zone.
+* **Order Acceptance**: Assign rider to consignment after NID verification check (`RiderVerifiedGuard`).
+* **Delivery Pipeline**: Step-by-step status transitions: `accepted` ➔ `picked_up` ➔ `in_transit` ➔ `delivered`.
+
+### 🗺️ 4. Delivery Zone & Dynamic Rates (`/zones`)
+* **Zone Management**: Custom rate cards storing base regular fare, base express fare, weight limits (kg), and excess weight charges.
+* **Automated Seeding**: Default initialization of `'Inside Dhaka'` and `'Outside Dhaka'` zones on application bootstrap (`OnModuleInit`).
+* **Notification Integration**: Automated email alerts via `@nestjs-modules/mailer` on zone creation.
+
+### 🛡️ 5. Administration & Dashboard Analytics (`/admin`)
+* **System Metrics**: Aggregated user counts by role, order status distribution, and total system revenue (`SUM(fare)` for completed orders).
+* **Verification & Security**: Approve or reject rider NID submissions and suspend problematic user accounts (`isActive = false`).
+
+---
+
+## 🛠️ Technology Stack
+
+| Component | Technology Used |
+| :--- | :--- |
+| **Framework** | NestJS (Node.js) |
+| **Language** | TypeScript |
+| **Database** | PostgreSQL |
+| **ORM** | TypeORM |
+| **Authentication** | Passport-JWT, Bcrypt |
+| **Validation** | class-validator, class-transformer |
+| **File Storage** | Multer |
+| **Email Service** | @nestjs-modules/mailer (Nodemailer) |
+
+---
+
+## 🗄️ Database Architecture & Entities
+
+The system utilizes 4 core TypeORM entities:
+
+1. **`User`** (`src/users/entities/user.entity.ts`): Stores user credentials, phone, email, role enum, and active status.
+2. **`RiderVerification`** (`src/users/entities/rider-verification.entity.ts`): Stores NID number, document image path, and approval status (`pending`, `approved`, `rejected`).
+3. **`DeliveryZone`** (`src/zones/entities/delivery-zone.entity.ts`): Stores pricing rules for geographical zones.
+4. **`Order`** (`src/orders/entities/order.entity.ts`): Stores consignment details, pickup/drop locations, weight, fare, status pipeline, and user relations.
+
+---
+
+## ⚙️ Environment Setup
+
+Create a `.env` file in the root directory:
+
+```env
+# Server Configuration
+PORT=3000
+
+# Database Configuration
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=admin
+DB_NAME=smart-pick
+
+# JWT Authentication
+JWT_SECRET=smart-pick-secret
+JWT_EXPIRES_IN=7d
+
+# Email Notification Configuration (Optional)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-google-app-password
 ```
 
-## Compile and run the project
+---
 
+## 🚀 Running the Project
+
+### 1. Install Dependencies
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
-
+### 2. Run in Development Mode
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run start:dev
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+### 3. Build for Production
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run build
+npm run start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+---
 
-## Resources
+## 🌐 API Endpoint Reference
 
-Check out a few resources that may come in handy when working with NestJS:
+| Method | Endpoint | Access / Guard | Description |
+| :--- | :--- | :--- | :--- |
+| **`POST`** | `/auth/register-customer` | Public | Register a new Customer account |
+| **`POST`** | `/auth/register-rider` | Public (Multer) | Register a Rider with NID document upload |
+| **`POST`** | `/auth/login` | Public | Authenticate user & receive Access Token |
+| **`GET`** | `/zones` | Public | Get all active delivery zones & fare rates |
+| **`POST`** | `/zones` | JWT + Admin | Create a new delivery zone rate card |
+| **`PATCH`** | `/zones/:id` | JWT + Admin | Update base fares and weight surcharges |
+| **`POST`** | `/orders/create` | JWT + Customer | Book a new consignment delivery |
+| **`GET`** | `/orders/customer/history` | JWT + Customer | View customer's order history & status |
+| **`PATCH`** | `/orders/customer/edit/:id` | JWT + Customer | Edit details of a pending order |
+| **`DELETE`** | `/orders/customer/cancel/:id` | JWT + Customer | Cancel a pending or newly accepted order |
+| **`GET`** | `/orders/available` | JWT + Verified Rider | View open delivery jobs board |
+| **`PATCH`** | `/orders/accept/:id` | JWT + Verified Rider | Accept a pending consignment job |
+| **`PATCH`** | `/orders/status/:id` | JWT + Verified Rider | Update status (`picked_up`, `in_transit`, `delivered`) |
+| **`GET`** | `/admin/dashboard` | JWT + Admin | View metrics, order counts, and system revenue |
+| **`PATCH`** | `/admin/verify-rider/:id` | JWT + Admin | Approve or reject rider NID verification |
+| **`PATCH`** | `/admin/users/suspend/:id` | JWT + Admin | Suspend a user account (`isActive = false`) |
+| **`GET`** | `/users/profile` | JWT (Logged in) | View user's own profile details |
+| **`PATCH`** | `/users/profile` | JWT (Logged in) | Update name, phone, email, or password |
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+---
 
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## 📄 License
+This project is proprietary software developed for AIUB Academic Presentation & Defense.
