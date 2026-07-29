@@ -33,13 +33,16 @@ import { MailerModule } from '@nestjs-modules/mailer';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         transport: {
-          host: configService.get('EMAIL_HOST'),
-          port: configService.get('EMAIL_PORT'),
+          host: configService.get('EMAIL_HOST') ?? 'smtp.gmail.com',
+          port: Number(configService.get('EMAIL_PORT')) || 587,
           secure: false,
           auth: {
             user: configService.get('EMAIL_USER'),
             pass: configService.get('EMAIL_PASS'),
           },
+        },
+        defaults: {
+          from: `"Smart Pick" <${configService.get('EMAIL_USER')}>`,
         },
       }),
     }),
