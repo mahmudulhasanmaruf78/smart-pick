@@ -61,7 +61,7 @@ export class ZonesService implements OnModuleInit {
       const savedZone = await this.zoneRepo.save(zone);
 
       try {
-        await this.mailerService.sendMail({
+        const mailResult = await this.mailerService.sendMail({
           to: 'mahmudulhasanmaruf78@gmail.com',
           subject: `Zone ${savedZone.name} has been created.`,
           html: `<h3>New Delivery Zone Added</h3>
@@ -72,8 +72,9 @@ export class ZonesService implements OnModuleInit {
             <p><b>Extra Weight Rate:</b> ৳${savedZone.extraWeightRate}/kg</p>
           `,
         });
+        console.log('EMAIL SENT SUCCESSFULLY:', mailResult);
       } catch (emailError) {
-        console.log(emailError);
+        console.error('EMAIL FAILED WITH ERROR:', emailError);
       }
 
       return savedZone;
