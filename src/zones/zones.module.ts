@@ -3,9 +3,10 @@ import { ZonesController } from './zones.controller';
 import { ZonesService } from './zones.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { DeliveryZone } from './entities/delivery-zone.entity';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([DeliveryZone])],
+  imports: [TypeOrmModule.forFeature([DeliveryZone]), MailerModule],
   controllers: [ZonesController],
   providers: [ZonesService],
   exports: [ZonesService],
