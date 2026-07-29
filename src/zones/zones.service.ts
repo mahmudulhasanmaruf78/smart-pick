@@ -58,24 +58,25 @@ export class ZonesService implements OnModuleInit {
   async create(dto: CreateZoneDto) {
     try {
       const zone = this.zoneRepo.create(dto);
-      return await this.zoneRepo.save(zone);
+      const savedZone = await this.zoneRepo.save(zone);
 
-      try{
+      try {
         await this.mailerService.sendMail({
           to: 'mahmudulhasanmaruf78@gmail.com',
-          subject: `Zone ${zone.name} has been created.`,
-          html:`<h3>New Delivery Zone Added</h3>
-            <p><b>Zone Name:</b> ${zone.name}</p>
-            <p><b>Base Regular Fare:</b> ৳${zone.baseRegularFare}</p>
-            <p><b>Base Express Fare:</b> ৳${zone.baseExpressFare}</p>
-            <p><b>Weight Limit:</b> ${zone.weightLimitKg} kg</p>
-            <p><b>Extra Weight Rate:</b> ৳${zone.extraWeightRate}/kg</p>
-          `,});
-        }
-        catch (emailError){
-          console.log(emailError);
-        }
+          subject: `Zone ${savedZone.name} has been created.`,
+          html: `<h3>New Delivery Zone Added</h3>
+            <p><b>Zone Name:</b> ${savedZone.name}</p>
+            <p><b>Base Regular Fare:</b> ৳${savedZone.baseRegularFare}</p>
+            <p><b>Base Express Fare:</b> ৳${savedZone.baseExpressFare}</p>
+            <p><b>Weight Limit:</b> ${savedZone.weightLimitKg} kg</p>
+            <p><b>Extra Weight Rate:</b> ৳${savedZone.extraWeightRate}/kg</p>
+          `,
+        });
+      } catch (emailError) {
+        console.log(emailError);
       }
+
+      return savedZone;
     } catch (error) {
       if (error instanceof Error && 'code' in error && error.code === '23505') {
         throw new ConflictException(
