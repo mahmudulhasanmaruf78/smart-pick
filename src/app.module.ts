@@ -8,6 +8,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ZonesModule } from './zones/zones.module';
 import { UsersModule } from './users/users.module';
 import { AdminModule } from './admin/admin.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
   imports: [
@@ -25,6 +26,21 @@ import { AdminModule } from './admin/admin.module';
         entities: [__dirname + '/**/*.entity{.ts,.js}'],
         autoLoadEntities: true,
         synchronize: true,
+      }),
+    }),
+    MailerModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        transport: {
+          host: configService.get('EMAIL_HOST'),
+          port: configService.get('EMAIL_PORT'),
+          secure: false,
+          auth: {
+            user: configService.get('EMAIL_USER'),
+            pass: configService.get('EMAIL_PASS'),
+          },
+        },
       }),
     }),
     AuthModule,
