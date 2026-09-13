@@ -16,7 +16,7 @@ import { Role } from '../common/enums/role.enum';
 @Controller('users')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Get('profile')
   @Roles(Role.Customer, Role.Rider, Role.Admin)
