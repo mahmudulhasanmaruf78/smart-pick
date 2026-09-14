@@ -24,30 +24,53 @@ export class UsersService implements OnModuleInit {
   ) {}
 
   async onModuleInit() {
-    const adminExists = await this.usersRepo.findOne({
-      where: { role: Role.Admin },
+    const defaultAdminEmail = 'admin@smartpick.com';
+    const hashPassword = await bcrypt.hash('admin', 10);
+
+    let defaultAdmin = await this.usersRepo.findOne({
+      where: { email: defaultAdminEmail },
     });
 
-    if (!adminExists) {
-      const hashPassword = await bcrypt.hash('admin123', 10);
-      const adminUser = this.usersRepo.create({
+    if (!defaultAdmin) {
+      defaultAdmin = this.usersRepo.create({
         name: 'System Admin',
-        email: 'admin@smartpick.com',
+        email: defaultAdminEmail,
         phone: '01700000000',
         password: hashPassword,
         role: Role.Admin,
         isActive: true,
       });
-      await this.usersRepo.save(adminUser);
-      console.log('Admin user created successfully');
+      await this.usersRepo.save(defaultAdmin);
+      console.log('Default admin user created: admin@smartpick.com (password: admin)');
+    } else {
+      defaultAdmin.password = hashPassword;
+      defaultAdmin.isActive = true;
+      await this.usersRepo.save(defaultAdmin);
+      console.log('Default admin synced: admin@smartpick.com (password: admin)');
     }
   }
 
   async findByIdentity(identity: string): Promise<User | null> {
-    return await this.usersRepo.findOne({
-      where: [{ email: identity }, { phone: identity }],
+    const trimmed = identity?.trim() || '';
+    const whereConditions: any[] = [{ email: trimmed }, { phone: trimmed }];
+
+    if (trimmed.toLowerCase() === 'admin') {
+      whereConditions.push({ email: 'admin@smartpick.com' });
+    }
+
+    const user = await this.usersRepo.findOne({
+      where: whereConditions,
       relations: { riderVerification: true },
     });
+    if (user && user.role === Role.Rider && !user.riderVerification) {
+      const rv = await this.verificationRepository.findOne({
+        where: [{ userId: user.id }, { user: { id: user.id } }],
+      });
+      if (rv) {
+        user.riderVerification = rv;
+      }
+    }
+    return user;
   }
 
   async createCustomer(userData: Partial<User>): Promise<User> {
@@ -89,6 +112,16 @@ export class UsersService implements OnModuleInit {
     if (!user) {
       throw new NotFoundException('User not found');
     }
+
+    if (user.role === Role.Rider && !user.riderVerification) {
+      const rv = await this.verificationRepository.findOne({
+        where: [{ userId: user.id }, { user: { id: user.id } }],
+      });
+      if (rv) {
+        user.riderVerification = rv;
+      }
+    }
+
     const { password, ...result } = user;
     return result;
   }

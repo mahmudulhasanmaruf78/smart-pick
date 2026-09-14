@@ -230,6 +230,31 @@ export class OrdersService {
     return order;
   }
 
+  async getRiderHistory(rider: { id: number }): Promise<Order[]> {
+    await this.assertRiderVerified(rider.id);
+
+    const orders = await this.orderRepository.find({
+      where: [
+        { riderId: rider.id },
+        { rider: { id: rider.id } },
+      ],
+      relations: {
+        customer: true,
+      },
+      order: {
+        createdAt: 'DESC',
+      },
+    });
+
+    for (const order of orders) {
+      if (order?.customer) {
+        delete (order.customer as any).password;
+      }
+    }
+
+    return orders;
+  }
+
   async findAvailable(query: FindAvailableOrdersDto): Promise<Order[]> {
     const where: FindOptionsWhere<Order> = { status: OrderStatus.Pending };
     if (query.pickupZoneId) where.pickupZoneId = query.pickupZoneId;

@@ -81,6 +81,13 @@ export class OrdersController {
     return this.ordersService.getRiderActiveOrder(req.user);
   }
 
+  @Get('rider/history')
+  @Roles(Role.Rider)
+  @UseGuards(RiderVerifiedGuard)
+  getRiderHistory(@Req() req: AuthenticatedRequest): Promise<Order[]> {
+    return this.ordersService.getRiderHistory(req.user);
+  }
+
   @Patch('accept/:id')
   @Roles(Role.Rider)
   @UseGuards(RiderVerifiedGuard)
