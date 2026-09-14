@@ -10,6 +10,8 @@ import { FindAvailableOrdersDto } from './dto/find-available-orders.dto';
 import { UpdateOrderStatusDto } from './dto/update-order-status.dto';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
+import { UsersService } from '../users/users.service';
+import { MailerService } from '@nestjs-modules/mailer';
 
 const RIDER_ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   [OrderStatus.Pending]: [],
@@ -29,6 +31,8 @@ export class OrdersService {
     private readonly riderVerificationRepository: Repository<RiderVerification>,
     @InjectRepository(DeliveryZone)
     private readonly zoneRepo: Repository<DeliveryZone>,
+    private readonly usersService: UsersService,
+    private readonly mailerService: MailerService,
   ) {}
 
   private get orderRepo(): Repository<Order> {
@@ -85,7 +89,14 @@ export class OrdersService {
       acceptedAt: null,
     });
 
-    return await this.orderRepository.save(order);
+    const savedOrder = await this.orderRepository.save(order);
+
+    // Trigger order creation confirmation email to customer
+    this.sendOrderCreatedEmail(savedOrder, customer.id).catch((err) =>
+      console.error('[EMAIL ERROR] Failed to send order created email:', err),
+    );
+
+    return savedOrder;
   }
 
   async editOrder(
@@ -246,7 +257,14 @@ export class OrdersService {
     order.riderId = rider.id;
     order.status = OrderStatus.Accepted;
     order.acceptedAt = new Date();
-    return this.orderRepository.save(order);
+    const savedOrder = await this.orderRepository.save(order);
+
+    // Trigger order accepted notification email to customer
+    this.sendOrderAcceptedEmail(savedOrder, rider.id).catch((err) =>
+      console.error('[EMAIL ERROR] Failed to send order accepted email:', err),
+    );
+
+    return savedOrder;
   }
 
   async updateStatus(
@@ -269,7 +287,16 @@ export class OrdersService {
     }
 
     order.status = dto.status;
-    return this.orderRepository.save(order);
+    const savedOrder = await this.orderRepository.save(order);
+
+    // If order was delivered, notify customer via email
+    if (dto.status === OrderStatus.Delivered) {
+      this.sendOrderDeliveredEmail(savedOrder, rider.id).catch((err) =>
+        console.error('[EMAIL ERROR] Failed to send order delivered email:', err),
+      );
+    }
+
+    return savedOrder;
   }
 
   private async assertRiderVerified(userId: number): Promise<void> {
@@ -290,5 +317,199 @@ export class OrdersService {
       throw new NotFoundException(`Order #${orderId} not found`);
     }
     return order;
+  }
+
+  // ---- EMAIL NOTIFICATION HELPERS ----
+
+  private async sendOrderCreatedEmail(
+    order: Order,
+    customerId: number,
+  ): Promise<void> {
+    try {
+      const customerUser = await this.usersService.findProfile(customerId);
+      if (!customerUser?.email) return;
+
+      await this.mailerService.sendMail({
+        to: customerUser.email,
+        subject: `Order #${order.id} Confirmation - SmartPick`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #2563eb; color: #ffffff; padding: 20px; text-align: center;">
+              <h2 style="margin: 0;">SmartPick Delivery</h2>
+              <p style="margin: 5px 0 0 0; font-size: 14px;">Order Placed Successfully</p>
+            </div>
+            <div style="padding: 24px; color: #374151;">
+              <p>Hello <b>${customerUser.name || 'Customer'}</b>,</p>
+              <p>Your delivery order <b>#${order.id}</b> has been placed successfully! Here are the details:</p>
+              
+              <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Order ID:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">#${order.id}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Pickup Area:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">${order.pickupArea} (${order.pickupZone || 'Inside Dhaka'})</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Drop Area:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">${order.dropArea} (${order.dropZone || 'Inside Dhaka'})</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Parcel Type:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">${order.parcelType}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Weight:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">${order.weight} kg</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Delivery Speed:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right; text-transform: capitalize;">${order.deliveryType}</td>
+                </tr>
+                <tr style="border-bottom: 2px solid #2563eb;">
+                  <td style="padding: 12px 0; color: #111827; font-weight: bold; font-size: 16px;">Total Fare:</td>
+                  <td style="padding: 12px 0; color: #2563eb; font-weight: bold; font-size: 18px; text-align: right;">৳${order.fare} BDT</td>
+                </tr>
+              </table>
+
+              <p style="color: #6b7280; font-size: 13px;">Status: <span style="background-color: #fef3c7; color: #92400e; padding: 3px 8px; border-radius: 4px; font-weight: bold;">Pending</span> (Waiting for a nearby rider to accept)</p>
+              <p style="margin-top: 24px;">Thank you for choosing SmartPick!</p>
+            </div>
+          </div>
+        `,
+      });
+      console.log(`[EMAIL] Order creation confirmation sent to ${customerUser.email}`);
+    } catch (mailError) {
+      console.error('[EMAIL ERROR] Failed to send order created email:', mailError);
+    }
+  }
+
+  private async sendOrderAcceptedEmail(
+    order: Order,
+    riderId: number,
+  ): Promise<void> {
+    try {
+      const customerId = order.customerId ?? order.customer?.id;
+      if (!customerId) return;
+
+      const customerUser =
+        order.customer?.email ? order.customer : await this.usersService.findProfile(customerId);
+      const riderUser = await this.usersService.findProfile(riderId);
+
+      if (!customerUser?.email) return;
+
+      await this.mailerService.sendMail({
+        to: customerUser.email,
+        subject: `Order #${order.id} Accepted by Rider - SmartPick`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #059669; color: #ffffff; padding: 20px; text-align: center;">
+              <h2 style="margin: 0;">SmartPick Delivery</h2>
+              <p style="margin: 5px 0 0 0; font-size: 14px;">Rider Assigned to Your Order</p>
+            </div>
+            <div style="padding: 24px; color: #374151;">
+              <p>Hello <b>${customerUser.name || 'Customer'}</b>,</p>
+              <p>Great news! A rider has accepted your delivery order <b>#${order.id}</b> and is on their way.</p>
+              
+              <div style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 16px; margin: 20px 0;">
+                <h4 style="margin: 0 0 10px 0; color: #166534;">Rider Information:</h4>
+                <p style="margin: 4px 0; font-size: 14px;"><b>Rider Name:</b> ${riderUser?.name || 'Assigned Rider'}</p>
+                <p style="margin: 4px 0; font-size: 14px;"><b>Rider Phone:</b> <a href="tel:${riderUser?.phone}" style="color: #059669; font-weight: bold;">${riderUser?.phone || 'N/A'}</a></p>
+              </div>
+
+              <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Order ID:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">#${order.id}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Pickup Address:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">${order.pickupArea}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Drop Address:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">${order.dropArea}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Delivery Charge:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">৳${order.fare} BDT</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Current Status:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #059669;">Accepted</td>
+                </tr>
+              </table>
+
+              <p style="margin-top: 24px;">Thank you for using SmartPick!</p>
+            </div>
+          </div>
+        `,
+      });
+      console.log(`[EMAIL] Order accepted notification sent to ${customerUser.email}`);
+    } catch (mailError) {
+      console.error('[EMAIL ERROR] Failed to send order accepted email:', mailError);
+    }
+  }
+
+  private async sendOrderDeliveredEmail(
+    order: Order,
+    riderId: number,
+  ): Promise<void> {
+    try {
+      const customerId = order.customerId ?? order.customer?.id;
+      if (!customerId) return;
+
+      const customerUser =
+        order.customer?.email ? order.customer : await this.usersService.findProfile(customerId);
+      const riderUser = await this.usersService.findProfile(riderId);
+
+      if (!customerUser?.email) return;
+
+      await this.mailerService.sendMail({
+        to: customerUser.email,
+        subject: `Order #${order.id} Successfully Delivered! - SmartPick`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #10b981; color: #ffffff; padding: 20px; text-align: center;">
+              <h2 style="margin: 0;">SmartPick Delivery</h2>
+              <p style="margin: 5px 0 0 0; font-size: 14px;">Parcel Delivered Successfully</p>
+            </div>
+            <div style="padding: 24px; color: #374151;">
+              <p>Hello <b>${customerUser.name || 'Customer'}</b>,</p>
+              <p>Your parcel for order <b>#${order.id}</b> has been safely delivered to the destination!</p>
+              
+              <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Order ID:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">#${order.id}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Delivered By:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">${riderUser?.name || 'Assigned Rider'}</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Delivered To:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right;">${order.dropArea} (${order.dropZone || 'Inside Dhaka'})</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Total Paid:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #10b981;">৳${order.fare} BDT</td>
+                </tr>
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                  <td style="padding: 8px 0; color: #6b7280;">Status:</td>
+                  <td style="padding: 8px 0; font-weight: bold; text-align: right; color: #10b981;">DELIVERED</td>
+                </tr>
+              </table>
+
+              <p style="margin-top: 24px;">Thank you for trusting SmartPick for your on-the-way peer-to-peer delivery!</p>
+            </div>
+          </div>
+        `,
+      });
+      console.log(`[EMAIL] Order delivered notification sent to ${customerUser.email}`);
+    } catch (mailError) {
+      console.error('[EMAIL ERROR] Failed to send order delivered email:', mailError);
+    }
   }
 }

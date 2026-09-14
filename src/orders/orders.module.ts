@@ -5,9 +5,14 @@ import { DeliveryZone } from '../zones/entities/delivery-zone.entity';
 import { OrdersService } from './orders.service';
 import { OrdersController } from './orders.controller';
 import { UsersModule } from '../users/users.module';
+import { MailerModule } from '@nestjs-modules/mailer';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, DeliveryZone]), UsersModule],
+  imports: [
+    TypeOrmModule.forFeature([Order, DeliveryZone]),
+    UsersModule,
+    MailerModule,
+  ],
   controllers: [OrdersController],
   providers: [OrdersService],
   exports: [OrdersService],

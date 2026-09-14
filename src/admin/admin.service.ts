@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Order } from '../orders/entities/order.entity';
 import { RiderVerification } from '../users/entities/rider-verification.entity';
@@ -55,8 +59,53 @@ export class AdminService {
       throw new NotFoundException('User not found');
     }
 
+    if (user.role === Role.Admin) {
+      throw new BadRequestException('Cannot suspend an administrator account');
+    }
+
     user.isActive = false;
-    return await this.userRepo.save(user);
+    const saved = await this.userRepo.save(user);
+    const { password, ...result } = saved;
+    return result;
+  }
+
+  async unsuspendUser(userId: number) {
+    const user = await this.userRepo.findOne({ where: { id: userId } });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    user.isActive = true;
+    const saved = await this.userRepo.save(user);
+    const { password, ...result } = saved;
+    return result;
+  }
+
+  async deleteUser(userId: number) {
+    const user = await this.userRepo.findOne({
+      where: { id: userId },
+      relations: { riderVerification: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.role === Role.Admin) {
+      throw new BadRequestException('Cannot delete an administrator account');
+    }
+
+    // Clean up associated rider verification if present
+    if (user.riderVerification) {
+      await this.riderVerificationRepo.delete({ id: user.riderVerification.id });
+    }
+
+    await this.userRepo.delete(userId);
+    return {
+      success: true,
+      message: `User #${userId} (${user.name}) has been permanently deleted.`,
+    };
   }
 
   async getDashboardStats() {

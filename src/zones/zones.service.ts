@@ -9,14 +9,12 @@ import { Repository } from 'typeorm';
 import { DeliveryZone } from './entities/delivery-zone.entity';
 import { CreateZoneDto } from './dto/create-zone.dto';
 import { UpdateZoneDto } from './dto/update-zone.dto';
-import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class ZonesService implements OnModuleInit {
   constructor(
     @InjectRepository(DeliveryZone)
     private readonly zoneRepo: Repository<DeliveryZone>,
-    private readonly mailerService: MailerService,
   ) {}
   async onModuleInit() {
     const InsideDhakaExist = await this.zoneRepo.findOne({
@@ -59,24 +57,6 @@ export class ZonesService implements OnModuleInit {
     try {
       const zone = this.zoneRepo.create(dto);
       const savedZone = await this.zoneRepo.save(zone);
-
-      try {
-        const mailResult = await this.mailerService.sendMail({
-          to: 'mahmudulhasanmaruf78@gmail.com',
-          subject: `Zone ${savedZone.name} has been created.`,
-          html: `<h3>New Delivery Zone Added</h3>
-            <p><b>Zone Name:</b> ${savedZone.name}</p>
-            <p><b>Base Regular Fare:</b> ৳${savedZone.baseRegularFare}</p>
-            <p><b>Base Express Fare:</b> ৳${savedZone.baseExpressFare}</p>
-            <p><b>Weight Limit:</b> ${savedZone.weightLimitKg} kg</p>
-            <p><b>Extra Weight Rate:</b> ৳${savedZone.extraWeightRate}/kg</p>
-          `,
-        });
-        console.log('EMAIL SENT SUCCESSFULLY:', mailResult);
-      } catch (emailError) {
-        console.error('EMAIL FAILED WITH ERROR:', emailError);
-      }
-
       return savedZone;
     } catch (error) {
       if (error instanceof Error && 'code' in error && error.code === '23505') {
